@@ -325,6 +325,28 @@ sequoia-x/
 16. **给别的项目改 bug 要守住边界** —— 本次只修能确证根因的 3 处；
     对字段名对不上但**无法确定正确替代名**的、以及**属业务判断**的（如重复规则），
     一律**不动 + 在汇报里说明**，不要擅自替用户做业务决策。
+17. **`.gitignore` 里的 `data/` 会误伤 `sequoia_x/data/` 包目录** —— 未加根锚定的目录名
+    会递归匹配，导致 `git add -A` 静默跳过 `sequoia_x/data/engine.py`，提交里出现
+    「整文件删除」。**看到 diff 里有纯删除就要查。** 写 `.gitignore` 时目录名一律加
+    `/` 锚定（`/data/*.db`）。详见 `references/publishing-to-github-fork.md`。
+18. **`ssh -T git@github.com` 报的 `Hi <owner>/<repo>!` 是部署密钥被授权的那个仓库**，
+    不是用户名 —— 说明 key 是**按仓库授权**的 deploy key，**推不了别的仓库**。
+    必须做一次探针推送验证真实写权限，不要因为看到 "successfully authenticated" 就以为能推。
+    （能 HTTPS 克隆公开上游 ≠ 有推送权限。）
+
+## 发布到用户的 GitHub fork
+
+本项目本体在 skill 目录里但**没有 `.git`**，上游 `sngyai/Sequoia-X`，用户 fork 是
+`yww520/Sequoia-X`。用户说「把修改后的项目推送到我的 GitHub」时走这条流程。
+
+> 📎 **完整流程与踩坑见 `references/publishing-to-github-fork.md`** —— 认证探针、
+> 用上游历史做 graft 基底、`.gitignore` 根锚定陷阱、敏感信息扫描、推不动时的汇报话术。
+> **动手前先读它**，尤其是「先探认证再构建」和「deploy key 按仓库授权」两条。
+
+要点速记：
+- **先探认证**（`gh auth status` + 探针推送），拿不到凭据就先问用户要 PAT，别先花时间构建
+- 用 `git reset --soft $(git rev-parse origin/master)` 把改动 graft 到上游历史，得到干净的**单次提交**
+- 有改动到 `README.md` 时**主动问用户**要不要保留上游原文
 
 ## 验证安装是否成功
 

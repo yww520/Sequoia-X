@@ -334,16 +334,35 @@ sequoia-x/
     必须做一次探针推送验证真实写权限，不要因为看到 "successfully authenticated" 就以为能推。
     （能 HTTPS 克隆公开上游 ≠ 有推送权限。）
 
-## 发布到用户的 GitHub fork
+## 与 GitHub 仓库同步（已完成，日常直接用）
 
-本项目本体在 skill 目录里但**没有 `.git`**，上游 `sngyai/Sequoia-X`，用户 fork 是
-`yww520/Sequoia-X`。用户说「把修改后的项目推送到我的 GitHub」时走这条流程。
+**本 skill 目录本身就是 `yww520/Sequoia-X` 的 git clone**（本目录有 `.git`，
+`origin` = HTTPS fork）。所以直接在本目录做 git 操作即可，不需要额外副本：
 
-> 📎 **完整流程与踩坑见 `references/publishing-to-github-fork.md`** —— 认证探针、
-> 用上游历史做 graft 基底、`.gitignore` 根锚定陷阱、敏感信息扫描、推不动时的汇报话术。
-> **动手前先读它**，尤其是「先探认证再构建」和「deploy key 按仓库授权」两条。
+```bash
+cd ~/.hermes/skills/research/sequoia-x
 
-要点速记：
+git pull origin master      # 拉取仓库更新（skill 即时生效）
+git status                  # 检查本地改动
+git add -A && git commit -m "..."
+git push origin master      # 推送回 fork
+```
+
+**830MB 运行时资产不入库**（`.gitignore` 覆盖，勿提交）：
+
+| 路径 | 大小 | 说明 |
+|---|---|---|
+| `data/sequoia_v2.db` | 580M | 日K 库，可 `backfill_tushare.py` 重建 |
+| `.venv/` | 250M | `uv sync` 重建 |
+| `.env` | — | 含飞书 webhook，**永不提交** |
+
+删掉这些只会丢缓存，不会丢代码；但重建 DB 要 44 分钟，别误删。
+
+> 📎 **发布流程与踩坑见 `references/publishing-to-github-fork.md`** —— 认证探针、
+> graft 基底、`.gitignore` 根锚定陷阱、敏感信息扫描、推不动时的汇报话术。
+> **给新仓库发布前先读它**，尤其「先探认证再构建」和「deploy key 按仓库授权」两条。
+
+⚠️ 发布到**新**仓库时的要点（本仓库已完成，仅作参考）：
 - **先探认证**（`gh auth status` + 探针推送），拿不到凭据就先问用户要 PAT，别先花时间构建
 - 用 `git reset --soft $(git rev-parse origin/master)` 把改动 graft 到上游历史，得到干净的**单次提交**
 - 有改动到 `README.md` 时**主动问用户**要不要保留上游原文
